@@ -42,7 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.extensions.libraryApi
 import org.jellyfin.sdk.api.client.extensions.tvShowsApi
@@ -86,6 +86,7 @@ class SeriesViewModel
         val similar = MutableLiveData<List<BaseItem>>()
 
         private var episodesJob: Job? = null
+        private var seasonsJob: Job? = null
         private var currentSeasonId: UUID? = null
 
         fun init(
@@ -227,7 +228,7 @@ class SeriesViewModel
                     seasonId,
                     seasonIndexNumber,
                     maxSeasonIndex
-                ).collect { cachedEpisodes ->
+                ).collectLatest { cachedEpisodes ->
                     val items = cachedEpisodes.map { it.toBaseItem(api) }
                     val cachedList = CachedList(items)
 
@@ -285,14 +286,15 @@ class SeriesViewModel
         }
 
         private fun loadSeasons() {
-             viewModelScope.launchIO {
-                seriesCacheService.getSeasonsFlow(seriesId, forceRefresh = true).collect { cachedSeasons ->
+            seasonsJob?.cancel()
+            seasonsJob = viewModelScope.launchIO {
+                seriesCacheService.getSeasonsFlow(seriesId, forceRefresh = true).collectLatest { cachedSeasons ->
                     val seasonsList = cachedSeasons.map { it.toBaseItem(api) }
                     withContext(Dispatchers.Main) {
                         this@SeriesViewModel.seasons.value = seasonsList
                     }
                 }
-             }
+            }
         }
 
         fun setWatchedSeries(played: Boolean) =
@@ -308,6 +310,7 @@ class SeriesViewModel
             val eps = episodes.value
             if (eps is EpisodeList.Success) {
                 if (eps.episodes is ApiRequestPager<*>) {
+                    @Suppress("UNCHECKED_CAST")
                     (eps.episodes as ApiRequestPager<GetEpisodesRequest>).refreshItem(listIndex, itemId)
                 } else if (eps.episodes is CachedList) {
                     currentSeasonId?.let { seasonId ->
@@ -411,6 +414,10 @@ class SeriesViewModel
             }
         }
 
+        /**
+         * WARNING: Cached seasons contain display metadata only.
+         * Missing fields: backdropImageTags, logoImageTags, etc.
+         */
         private fun CachedSeason.toBaseItem(api: ApiClient): BaseItem {
              val dto = BaseItemDto(
                  id = seasonId,
@@ -423,6 +430,11 @@ class SeriesViewModel
              return BaseItem(dto, imageUrl, null, null)
         }
 
+        /**
+         * WARNING: Cached episodes contain display metadata only.
+         * For playback, fetch complete episode data from API using episodeId.
+         * Missing fields: mediaSources, mediaStreams, trickplay data, etc.
+         */
         private fun CachedEpisode.toBaseItem(api: ApiClient): BaseItem {
              val dto = BaseItemDto(
                  id = episodeId,
@@ -430,7 +442,14 @@ class SeriesViewModel
                  overview = overview,
                  indexNumber = indexNumber,
                  runTimeTicks = runTimeTicks,
-                 premiereDate = premiereDate?.let { try { LocalDateTime.parse(it) } catch(e: Exception) { null } },
+                 premiereDate = premiereDate?.let {
+                     try {
+                         LocalDateTime.parse(it)
+                     } catch(e: Exception) {
+                         Timber.w(e, "Invalid premiere date format: %s", it)
+                         null
+                     }
+                 },
                  userData = BaseItemUserData(playbackPositionTicks = playbackPositionTicks, played = played, isFavorite = isFavorite),
                  type = BaseItemKind.EPISODE,
                  seriesId = seriesId,

@@ -12,7 +12,7 @@ import java.util.UUID
  * Stores episode information including playback state to enable
  * instant series navigation without blocking on network requests.
  *
- * Cache validity: 1 hour (playback state updates frequently)
+ * Cache validity: Dynamic (15 minutes for current season, 1 hour for completed seasons)
  * Invalidation: After playback completes or state changes
  */
 @Entity(

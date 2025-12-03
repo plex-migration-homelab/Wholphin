@@ -206,6 +206,10 @@ class SeriesCacheService @Inject constructor(
         return (System.currentTimeMillis() - lastUpdated) < SEASONS_CACHE_MAX_AGE_MS
     }
 
+    /**
+     * Intentionally fire-and-forget. The launched coroutine is lightweight
+     * (cache check + channel send) and self-limiting via the bounded queue.
+     */
     fun queuePrefetch(seriesId: UUID, prioritySeasonId: UUID? = null) {
         scope.launch {
             if (prefetchingSeriesIds.contains(seriesId)) {
