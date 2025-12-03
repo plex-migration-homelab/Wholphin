@@ -37,6 +37,7 @@ import com.github.damontecres.wholphin.services.AppUpgradeHandler
 import com.github.damontecres.wholphin.services.DeviceProfileService
 import com.github.damontecres.wholphin.services.NavigationManager
 import com.github.damontecres.wholphin.services.PlaybackLifecycleObserver
+import com.github.damontecres.wholphin.services.SeriesCacheService
 import com.github.damontecres.wholphin.services.ServerEventListener
 import com.github.damontecres.wholphin.services.UpdateChecker
 import com.github.damontecres.wholphin.services.hilt.AuthOkHttpClient
@@ -84,6 +85,9 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var deviceProfileService: DeviceProfileService
 
+    @Inject
+    lateinit var seriesCacheService: SeriesCacheService
+
     @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,6 +95,9 @@ class MainActivity : AppCompatActivity() {
         lifecycle.addObserver(playbackLifecycleObserver)
         if (savedInstanceState == null) {
             appUpgradeHandler.copySubfont(false)
+        }
+        lifecycleScope.launch {
+            seriesCacheService.cleanupStaleCache()
         }
         setContent {
             val density = LocalDensity.current

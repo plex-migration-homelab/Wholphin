@@ -42,6 +42,10 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun seriesCacheDao(db: AppDatabase): com.github.damontecres.wholphin.data.SeriesCacheDao = db.seriesCacheDao()
+
+    @Provides
+    @Singleton
     fun serverDao(db: AppDatabase): JellyfinServerDao = db.serverDao()
 
     @Provides

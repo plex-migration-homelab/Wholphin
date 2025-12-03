@@ -34,6 +34,7 @@ class DatePlayedService
     constructor(
         private val api: ApiClient,
         @param:IoCoroutineScope private val scope: CoroutineScope,
+        private val seriesCacheService: SeriesCacheService,
     ) {
         private val datePlayedCache =
             CacheBuilder
@@ -83,6 +84,7 @@ class DatePlayedService
             item.data.seriesId?.let { seriesId ->
                 Timber.d("Invalidating %s", seriesId)
                 datePlayedCache.asMap().keys.removeIf { it.seriesId == seriesId }
+                scope.launch { seriesCacheService.invalidateSeriesCache(seriesId) }
             }
         }
 
@@ -98,6 +100,7 @@ class DatePlayedService
             if (seriesId != null) {
                 Timber.d("Invalidating %s", seriesId)
                 datePlayedCache.asMap().keys.removeIf { it.seriesId == seriesId }
+                seriesCacheService.invalidateSeriesCache(seriesId)
             }
         }
 

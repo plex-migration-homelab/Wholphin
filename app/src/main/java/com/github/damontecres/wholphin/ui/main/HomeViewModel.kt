@@ -12,6 +12,7 @@ import com.github.damontecres.wholphin.preferences.UserPreferences
 import com.github.damontecres.wholphin.services.DatePlayedService
 import com.github.damontecres.wholphin.services.FavoriteWatchManager
 import com.github.damontecres.wholphin.services.NavigationManager
+import com.github.damontecres.wholphin.services.SeriesCacheService
 import com.github.damontecres.wholphin.ui.SlimItemFields
 import com.github.damontecres.wholphin.ui.nav.ServerNavDrawerItem
 import com.github.damontecres.wholphin.ui.setValueOnMain
@@ -58,6 +59,7 @@ class HomeViewModel
         val navDrawerItemRepository: NavDrawerItemRepository,
         private val favoriteWatchManager: FavoriteWatchManager,
         private val datePlayedService: DatePlayedService,
+        private val seriesCacheService: SeriesCacheService,
     ) : ViewModel() {
         val loadingState = MutableLiveData<LoadingState>(LoadingState.Pending)
         val refreshState = MutableLiveData<LoadingState>(LoadingState.Pending)
@@ -132,6 +134,10 @@ class HomeViewModel
                                 }
                             }
                         }
+
+                    watching.filterIsInstance<HomeRowLoadingState.Success>().forEach {
+                        seriesCacheService.prefetchForVisibleEpisodes(it.items)
+                    }
 
                     val latest = getLatest(userDto, limit, includedIds)
                     val pendingLatest = latest.map { HomeRowLoadingState.Loading(it.title) }
@@ -314,6 +320,14 @@ class HomeViewModel
             favoriteWatchManager.setFavorite(itemId, favorite)
             withContext(Dispatchers.Main) {
                 init(preferences)
+            }
+        }
+
+        fun onItemFocused(item: BaseItem?) {
+            item?.let {
+                if (it.type == BaseItemKind.EPISODE && it.data.seriesId != null) {
+                    seriesCacheService.prefetchOnFocus(it.data.seriesId!!, it.data.seasonId)
+                }
             }
         }
     }

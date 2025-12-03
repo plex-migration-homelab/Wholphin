@@ -7,6 +7,9 @@ import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.github.damontecres.wholphin.data.model.CachedEpisode
+import com.github.damontecres.wholphin.data.model.CachedSeason
+import com.github.damontecres.wholphin.data.model.CachedSeriesMetadata
 import com.github.damontecres.wholphin.data.model.GetItemsFilter
 import com.github.damontecres.wholphin.data.model.ItemPlayback
 import com.github.damontecres.wholphin.data.model.JellyfinServer
@@ -21,8 +24,17 @@ import timber.log.Timber
 import java.util.UUID
 
 @Database(
-    entities = [JellyfinServer::class, JellyfinUser::class, ItemPlayback::class, NavDrawerPinnedItem::class, LibraryDisplayInfo::class],
-    version = 8,
+    entities = [
+        JellyfinServer::class,
+        JellyfinUser::class,
+        ItemPlayback::class,
+        NavDrawerPinnedItem::class,
+        LibraryDisplayInfo::class,
+        CachedSeriesMetadata::class,
+        CachedSeason::class,
+        CachedEpisode::class
+    ],
+    version = 9,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(3, 4),
@@ -30,6 +42,7 @@ import java.util.UUID
         AutoMigration(5, 6),
         AutoMigration(6, 7),
         AutoMigration(7, 8),
+        AutoMigration(8, 9),
     ],
 )
 @TypeConverters(Converters::class)
@@ -41,6 +54,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun serverPreferencesDao(): ServerPreferencesDao
 
     abstract fun libraryDisplayInfoDao(): LibraryDisplayInfoDao
+
+    abstract fun seriesCacheDao(): SeriesCacheDao
 }
 
 class Converters {

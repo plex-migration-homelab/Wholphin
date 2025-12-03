@@ -161,6 +161,7 @@ fun HomePage(
                 },
                 loadingState = refreshing,
                 showClock = preferences.appPreferences.interfacePreferences.showClock,
+                onItemFocused = viewModel::onItemFocused,
                 modifier = modifier,
             )
             dialog?.let { params ->
@@ -198,6 +199,7 @@ fun HomePageContent(
     showClock: Boolean,
     modifier: Modifier = Modifier,
     onFocusPosition: ((RowColumn) -> Unit)? = null,
+    onItemFocused: ((BaseItem?) -> Unit)? = null,
     loadingState: LoadingState? = null,
 ) {
     val context = LocalContext.current
@@ -406,6 +408,7 @@ fun HomePageContent(
                                                         ),
                                                     ).onFocusChanged {
                                                         if (it.isFocused) {
+                                                            onItemFocused?.invoke(item)
                                                             val nonEmptyRowBefore =
                                                                 homeRows
                                                                     .subList(0, rowIndex)
