@@ -97,7 +97,7 @@ class SeriesViewModel
         ) {
             this.seriesId = itemId
             this.prefs = prefs
-            viewModelScope.launch(
+            seasonsJob = viewModelScope.launch(
                 LoadingExceptionHandler(
                     loading,
                     "Error loading series $seriesId",
@@ -111,7 +111,7 @@ class SeriesViewModel
                 }
 
                 // Progressive loading of seasons
-                seriesCacheService.getSeasonsFlow(seriesId).collect { cachedSeasons ->
+                seriesCacheService.getSeasonsFlow(seriesId).collectLatest { cachedSeasons ->
                     val seasonsList = cachedSeasons.map { it.toBaseItem(api) }
 
                     withContext(Dispatchers.Main) {
@@ -157,7 +157,7 @@ class SeriesViewModel
             }
         }
 
-        private suspend fun loadDetails(item: BaseItem, itemId: UUID) {
+        private fun loadDetails(item: BaseItem, itemId: UUID) {
              viewModelScope.launchIO {
                 val trailers = trailerService.getTrailers(item)
                 withContext(Dispatchers.Main) {
@@ -220,9 +220,28 @@ class SeriesViewModel
             val currentSeason = seasonList.find { it.id == seasonId }
             val seasonIndexNumber = currentSeason?.indexNumber
 
-            // Set loading state? No, avoid flashing.
+            // Don't set loading state to avoid UI flashing
 
             episodesJob = viewModelScope.launchIO(ExceptionHandler(true)) {
+                // Try cache first for instant display
+                val cached = seriesCacheService.getEpisodesCached(
+                    seriesId, seasonId, seasonIndexNumber, maxSeasonIndex
+                )
+                if (cached != null) {
+                    val items = cached.map { it.toBaseItem(api) }
+                    val cachedList = CachedList(items)
+                    val initialIndex = if (episodeId != null || episodeNumber != null) {
+                        cachedList.indexOfBlocking {
+                            equalsNotNull(it?.id, episodeId) || equalsNotNull(it?.indexNumber, episodeNumber)
+                        }.coerceAtLeast(0)
+                    } else 0
+
+                    withContext(Dispatchers.Main) {
+                        this@SeriesViewModel.episodes.value = EpisodeList.Success(cachedList, initialIndex)
+                    }
+                    return@launchIO  // Cache was fresh, done
+                }
+
                 seriesCacheService.getEpisodesFlow(
                     seriesId,
                     seasonId,

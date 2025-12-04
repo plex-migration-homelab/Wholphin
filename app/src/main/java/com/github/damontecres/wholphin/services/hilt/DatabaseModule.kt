@@ -9,6 +9,7 @@ import androidx.room.Room
 import com.github.damontecres.wholphin.data.AppDatabase
 import com.github.damontecres.wholphin.data.ItemPlaybackDao
 import com.github.damontecres.wholphin.data.JellyfinServerDao
+import com.github.damontecres.wholphin.data.SeriesCacheDao
 import com.github.damontecres.wholphin.data.LibraryDisplayInfoDao
 import com.github.damontecres.wholphin.data.Migrations
 import com.github.damontecres.wholphin.data.ServerPreferencesDao
@@ -42,7 +43,7 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun seriesCacheDao(db: AppDatabase): com.github.damontecres.wholphin.data.SeriesCacheDao = db.seriesCacheDao()
+    fun seriesCacheDao(db: AppDatabase): SeriesCacheDao = db.seriesCacheDao()
 
     @Provides
     @Singleton

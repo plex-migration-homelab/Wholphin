@@ -9,7 +9,6 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.github.damontecres.wholphin.data.model.CachedEpisode
 import com.github.damontecres.wholphin.data.model.CachedSeason
-import com.github.damontecres.wholphin.data.model.CachedSeriesMetadata
 import com.github.damontecres.wholphin.data.model.GetItemsFilter
 import com.github.damontecres.wholphin.data.model.ItemPlayback
 import com.github.damontecres.wholphin.data.model.JellyfinServer
@@ -30,7 +29,6 @@ import java.util.UUID
         ItemPlayback::class,
         NavDrawerPinnedItem::class,
         LibraryDisplayInfo::class,
-        CachedSeriesMetadata::class,
         CachedSeason::class,
         CachedEpisode::class
     ],
