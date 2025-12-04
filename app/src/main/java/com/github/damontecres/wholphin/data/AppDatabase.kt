@@ -2,14 +2,15 @@ package com.github.damontecres.wholphin.data
 
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteTable
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.github.damontecres.wholphin.data.model.CachedEpisode
 import com.github.damontecres.wholphin.data.model.CachedSeason
-import com.github.damontecres.wholphin.data.model.CachedSeriesMetadata
 import com.github.damontecres.wholphin.data.model.GetItemsFilter
 import com.github.damontecres.wholphin.data.model.ItemPlayback
 import com.github.damontecres.wholphin.data.model.JellyfinServer
@@ -30,11 +31,10 @@ import java.util.UUID
         ItemPlayback::class,
         NavDrawerPinnedItem::class,
         LibraryDisplayInfo::class,
-        CachedSeriesMetadata::class,
         CachedSeason::class,
         CachedEpisode::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(3, 4),
@@ -43,6 +43,7 @@ import java.util.UUID
         AutoMigration(6, 7),
         AutoMigration(7, 8),
         AutoMigration(8, 9),
+        AutoMigration(9, 10, spec = Migrations.DeleteCachedSeriesMetadata::class),
     ],
 )
 @TypeConverters(Converters::class)
@@ -91,6 +92,9 @@ class Converters {
 }
 
 object Migrations {
+    @DeleteTable(tableName = "CachedSeriesMetadata")
+    class DeleteCachedSeriesMetadata : AutoMigrationSpec
+
     val Migrate2to3 =
         object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {

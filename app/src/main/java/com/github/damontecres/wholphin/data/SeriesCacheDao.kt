@@ -6,7 +6,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.github.damontecres.wholphin.data.model.CachedEpisode
 import com.github.damontecres.wholphin.data.model.CachedSeason
-import com.github.damontecres.wholphin.data.model.CachedSeriesMetadata
 import java.util.UUID
 
 /**
@@ -19,16 +18,6 @@ import java.util.UUID
  */
 @Dao
 interface SeriesCacheDao {
-    // ─────────────────────────────────────────────────────────────────────
-    // Series metadata
-    // ─────────────────────────────────────────────────────────────────────
-
-    @Query("SELECT * FROM CachedSeriesMetadata WHERE userId = :userId AND seriesId = :seriesId")
-    suspend fun getSeriesMetadata(userId: Int, seriesId: UUID): CachedSeriesMetadata?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSeriesMetadata(metadata: CachedSeriesMetadata)
-
     // ─────────────────────────────────────────────────────────────────────
     // Seasons
     // ─────────────────────────────────────────────────────────────────────
@@ -91,9 +80,6 @@ interface SeriesCacheDao {
     @Query("DELETE FROM CachedSeason WHERE userId = :userId AND seriesId = :seriesId")
     suspend fun invalidateSeriesSeasons(userId: Int, seriesId: UUID)
 
-    @Query("DELETE FROM CachedSeriesMetadata WHERE userId = :userId AND seriesId = :seriesId")
-    suspend fun invalidateSeriesMetadata(userId: Int, seriesId: UUID)
-
     // ─────────────────────────────────────────────────────────────────────
     // Cleanup (remove stale entries to bound cache size)
     // ─────────────────────────────────────────────────────────────────────
@@ -104,9 +90,6 @@ interface SeriesCacheDao {
 
     @Query("DELETE FROM CachedSeason WHERE lastUpdated < :threshold")
     suspend fun deleteStaleSeasons(threshold: Long)
-
-    @Query("DELETE FROM CachedSeriesMetadata WHERE lastUpdated < :threshold")
-    suspend fun deleteStaleMetadata(threshold: Long)
 
     // ─────────────────────────────────────────────────────────────────────
     // Debug/stats

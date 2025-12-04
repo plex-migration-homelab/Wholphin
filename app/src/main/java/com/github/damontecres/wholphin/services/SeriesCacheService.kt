@@ -249,8 +249,6 @@ class SeriesCacheService @Inject constructor(
     }
 
     fun prefetchOnFocus(seriesId: UUID, seasonId: UUID?) {
-        if (prefetchingSeriesIds.contains(seriesId)) return
-
         scope.launch {
             if (isSeriesCached(seriesId)) return@launch
 
@@ -272,6 +270,13 @@ class SeriesCacheService @Inject constructor(
         }
     }
 
+    /**
+     * Update playback state for a single episode without full cache invalidation.
+     *
+     * Currently unused - full invalidation via [invalidateSeriesCache] is used instead.
+     * Reserved for future optimization when incremental updates are needed.
+     */
+    @Suppress("unused")
     suspend fun updateEpisodePlaybackState(episodeId: UUID, positionTicks: Long, played: Boolean) {
         withContext(Dispatchers.IO) {
             seriesCacheDao.updatePlaybackState(userId, episodeId, positionTicks, played)
@@ -283,7 +288,6 @@ class SeriesCacheService @Inject constructor(
             val threshold = System.currentTimeMillis() - STALE_CACHE_THRESHOLD_MS
             seriesCacheDao.deleteStaleEpisodes(threshold)
             seriesCacheDao.deleteStaleSeasons(threshold)
-            seriesCacheDao.deleteStaleMetadata(threshold)
 
             val remaining = seriesCacheDao.getCachedSeriesCount(userId)
             Timber.d("Cache cleanup complete. $remaining series remain cached.")
